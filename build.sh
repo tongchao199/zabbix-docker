@@ -37,9 +37,11 @@ else
     VCS_REF=$MAJOR_VERSION.$MINOR_VERSION
 fi
 
-docker build -t zabbix-$app_component:$os-$version --build-arg VCS_REF="$VCS_REF" --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` -f Dockerfile .
+function docker-build () {
+    docker build -t zabbix-$app_component:$os-$version --build-arg VCS_REF="$VCS_REF" --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` -f Dockerfile .
+}
 
-if [ "$type" != "build" ]; then
+function docker-run () {
     links=""
     env_vars=""
 
@@ -48,7 +50,7 @@ if [ "$type" != "build" ]; then
         env_vars="$env_vars -e MYSQL_DATABASE=\"zabbix\" -e MYSQL_USER=\"zabbix\" -e MYSQL_PASSWORD=\"zabbix\" -e MYSQL_RANDOM_ROOT_PASSWORD=true"
 
         docker rm -f mysql-server
-        docker run --name mysql-server -t $env_vars -d mysql:5.7
+        docker run --name mysql-server --network host -t $env_vars -d mysql:5.7
     fi
 
     if [ "$links" != "" ]; then
@@ -57,5 +59,18 @@ if [ "$type" != "build" ]; then
 
     docker rm -f zabbix-$app_component
 
-    docker run --name zabbix-$app_component -t -d $links $env_vars zabbix-$app_component:$os-$version
-fi
+    docker run --name zabbix-$app_component --network host -t -d $env_vars zabbix-$app_component:$os-$version
+}
+
+case "${type}" in
+build)
+    docker-build
+    ;;
+run)
+    docker-run
+    ;;
+*)
+    echo "invalid type:${type}"
+    exit 0
+    ;;
+esac
