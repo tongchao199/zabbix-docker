@@ -135,6 +135,9 @@ WORKDIR /var/lib/zabbix
 VOLUME ["/usr/lib/zabbix/externalscripts", "/var/lib/zabbix/enc", "/var/lib/zabbix/modules", "/var/lib/zabbix/snmptraps"]
 VOLUME ["/var/lib/zabbix/ssh_keys", "/var/lib/zabbix/ssl/certs", "/var/lib/zabbix/ssl/keys", "/var/lib/zabbix/ssl/ssl_ca"]
 
+ARG DB_SERVER_HOST="zabbix-proxy-mysql.db.com"
+ENV DB_SERVER_HOST=${DB_SERVER_HOST}
+
 COPY ["docker-entrypoint.sh", "/usr/bin/"]
 
 ENTRYPOINT ["/sbin/tini", "--"]
